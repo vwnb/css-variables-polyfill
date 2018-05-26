@@ -34,7 +34,8 @@ let cssVarPoly = {
       if(prop.substr(0,2) == "--"){
         Object.keys(cssVarPoly.varsByBlock).forEach(function(blockKey){
           cssVarPoly.varsByBlock[blockKey].forEach(function(cssVar, varKey){
-            cssVarPoly.varsByBlock[blockKey][varKey] = cssVar.replace(new RegExp('(--'+prop+':)(.*)(;)'), '$1 '+val+'$3');
+            if(cssVar.indexOf(prop) != -1)
+              cssVarPoly.varsByBlock[blockKey][varKey] = cssVar.replace(/:.*;/, ": "+val+";");
           })
         });
         cssVarPoly.updateCSS();
