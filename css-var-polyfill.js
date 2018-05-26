@@ -13,11 +13,10 @@ let cssVarPoly = {
     // Edge supports supports, so check for actual variable support
     if (window.CSS && window.CSS.supports && window.CSS.supports('(--foo: red)')) {
       // this browser does support variables, abort
-      console.log('your browser supports CSS variables, aborting and letting the native support handle things.');
+      window.console && console.log('your browser supports CSS variables, aborting and letting the native support handle things.');
       return;
     } else {
-      // edge barfs on console statements if the console is not open... lame!
-      console.log('no support for you! polyfill all (some of) the things!!');
+      window.console && console.log('no support for you! polyfill all (some of) the things!!');
       document.querySelector('body').classList.add('cssvars-polyfilled'); // TypeError danger. Maybe not in IE or Opera
     }
 
@@ -54,14 +53,14 @@ let cssVarPoly = {
 
     // loop through all CSS blocks looking for CSS variables being set
     [].forEach.call(styleBlocks, function(block) {
-      // console.log(block.nodeName);
+      // window.console && console.log(block.nodeName);
       let theCSS;
       if (block.nodeName === 'STYLE') {
-        // console.log("style");
+        // window.console && console.log("style");
         theCSS = block.innerHTML;
         cssVarPoly.findSetters(theCSS, counter);
       } else if (block.nodeName === 'LINK') {
-        // console.log("link");
+        // window.console && console.log("link");
         cssVarPoly.getLink(block.getAttribute('href'), counter, function(counter, request) {
           cssVarPoly.findSetters(request.responseText, counter);
           cssVarPoly.oldCSS[counter] = request.responseText;
@@ -77,7 +76,7 @@ let cssVarPoly = {
 
   // find all the "--variable: value" matches in a provided block of CSS and add them to the master list
   findSetters: function(theCSS, counter) {
-    // console.log(theCSS);
+    // window.console && console.log(theCSS);
     cssVarPoly.varsByBlock[counter] = theCSS.match(/(--.+:.+;)/g) || [];
   },
 
@@ -88,15 +87,15 @@ let cssVarPoly = {
 
     // loop through the css blocks (styles and links)
     for (let curCSSID in cssVarPoly.oldCSS) {
-      // console.log("curCSS:", cssVarPoly.oldCSS[curCSSID]);
+      // window.console && console.log("curCSS:", cssVarPoly.oldCSS[curCSSID]);
       let newCSS = cssVarPoly.replaceGetters(cssVarPoly.oldCSS[curCSSID], cssVarPoly.ratifiedVars);
       // put it back into the page
       // first check to see if this block exists already
       if (document.querySelector('#inserted' + curCSSID)) {
-        // console.log("updating")
+        // window.console && console.log("updating")
         document.querySelector('#inserted' + curCSSID).innerHTML = newCSS;
       } else {
-        // console.log("adding");
+        // window.console && console.log("adding");
         var style = document.createElement('style');
         style.type = 'text/css';
         style.innerHTML = newCSS;
@@ -109,24 +108,24 @@ let cssVarPoly = {
 
   // parse a provided block of CSS looking for a provided list of variables and replace the --var-name with the correct value
   replaceGetters: function(curCSS, varList) {
-    // console.log(varList);
+    // window.console && console.log(varList);
     for (let theVar in varList) {
-      // console.log(theVar);
+      // window.console && console.log(theVar);
       // match the variable with the actual variable name
       let getterRegex = new RegExp('var\\(\\s*' + theVar + '\\s*\\)', 'g');
-      // console.log(getterRegex);
-      // console.log(curCSS);
+      // window.console && console.log(getterRegex);
+      // window.console && console.log(curCSS);
       curCSS = curCSS.replace(getterRegex, varList[theVar]);
 
       // now check for any getters that are left that have fallbacks
       let getterRegex2 = new RegExp('var\\(\\s*.+\\s*,\\s*(.+)\\)', 'g');
-      // console.log(getterRegex);
-      // console.log(curCSS);
+      // window.console && console.log(getterRegex);
+      // window.console && console.log(curCSS);
       let matches = curCSS.match(getterRegex2);
       if (matches) {
-        // console.log("matches",matches);
+        // window.console && console.log("matches",matches);
         matches.forEach(function(match) {
-          // console.log(match.match(/var\(.+,\s*(.+)\)/))
+          // window.console && console.log(match.match(/var\(.+,\s*(.+)\)/))
           // find the fallback within the getter
           curCSS = curCSS.replace(match, match.match(/var\(.+,\s*(.+)\)/)[1]);
         });
@@ -135,29 +134,29 @@ let cssVarPoly = {
 
       // curCSS = curCSS.replace(getterRegex2,varList[theVar]);
     };
-    // console.log(curCSS);
+    // window.console && console.log(curCSS);
     return curCSS;
   },
 
   // determine the css variable name value pair and track the latest
   ratifySetters: function(varList) {
-    // console.log("varList:",varList);
+    // window.console && console.log("varList:",varList);
     // loop through each block in order, to maintain order specificity
     for (let curBlock in varList) {
       let curVars = varList[curBlock];
-      // console.log("curVars:",curVars);
+      // window.console && console.log("curVars:",curVars);
       // loop through each var in the block
       curVars.forEach(function(theVar) {
-        // console.log(theVar);
+        // window.console && console.log(theVar);
         // split on the name value pair separator
         let matches = theVar.split(/:\s*/);
-        // console.log(matches);
+        // window.console && console.log(matches);
         // put it in an object based on the varName. Each time we do this it will override a previous use and so will always have the last set be the winner
         // 0 = the name, 1 = the value, strip off the ; if it is there
         cssVarPoly.ratifiedVars[matches[0]] = matches[1].replace(/;/, '');
       });
     };
-    // console.log(cssVarPoly.ratifiedVars);
+    // window.console && console.log(cssVarPoly.ratifiedVars);
   },
 
   // get the CSS file (same domain for now)
@@ -168,7 +167,7 @@ let cssVarPoly = {
     request.onload = function() {
       if (request.status >= 200 && request.status < 400) {
         // Success!
-        // console.log(request.responseText);
+        // window.console && console.log(request.responseText);
         if (typeof success === 'function') {
           success(counter, request);
         }
