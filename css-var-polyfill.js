@@ -1,7 +1,7 @@
 /*!
- * css-var-polyfill.js - v1.1.0
+ * css-var-polyfill.js - v1.1.1
  *
- * Copyright (c) 2018 Aaron Barker <http://aaronbarker.net>
+ * Copyright / forked from (c) 2018 Aaron Barker <http://aaronbarker.net>
  * Released under the MIT license
  *
  * Date: 2018-04-30
@@ -18,7 +18,7 @@ let cssVarPoly = {
     } else {
       // edge barfs on console statements if the console is not open... lame!
       console.log('no support for you! polyfill all (some of) the things!!');
-      document.querySelector('body').classList.add('cssvars-polyfilled');
+      document.querySelector('body').classList.add('cssvars-polyfilled'); // TypeError danger. Maybe not in IE or Opera
     }
 
     cssVarPoly.ratifiedVars = {};
@@ -28,6 +28,21 @@ let cssVarPoly = {
     // start things off
     cssVarPoly.findCSS();
     cssVarPoly.updateCSS();
+
+    // override setProperty
+    document.documentElement.style.setProperty = function(prop, val){
+      // fall back to default if not setting CSS variable
+      if(prop.substr(0,2) == "--"){
+        Object.keys(cssVarPoly.varsByBlock).forEach(function(blockKey){
+          cssVarPoly.varsByBlock[blockKey].forEach(function(cssVar, varKey){
+            cssVarPoly.varsByBlock[blockKey][varKey] = cssVar.replace(new RegExp('(--'+prop+':)(.*)(;)'), '$1 '+val+'$3');
+          })
+        });
+        cssVarPoly.updateCSS();
+      }else{
+        CSS2Properties.prototype.setProperty.call(document.documentElement.style, prop, val)
+      }
+    }
   },
 
   // find all the css blocks, save off the content, and look for variables
